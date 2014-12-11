@@ -55,9 +55,9 @@ public class SlitherBoard extends JPanel{
 	int[][] gridArray;
 	int rowSize;
 	int colSize;
-	
+
 	/***Used to check if the submitted solution is a true solution**/
-	ArrayList<Square> sol;
+	ArrayList<Edge> sol = new ArrayList<Edge>();
 	
 	class makeGrid implements ActionListener{
 		public void actionPerformed(ActionEvent evnt){
@@ -121,10 +121,10 @@ public class SlitherBoard extends JPanel{
 			//Check if squares with numbers have correct number of lines surrounding it
 			int counter = 0;
 			boolean noErrors = false;
+			boolean brokeout = false;
 			outerloop1:
 				for(int a = 0; a < rowSize; a++){
 					for(int b = 0; b < colSize; b++){
-						System.out.println(a + " " + b);
 						if(squares[a][b].tSide == true)
 							counter++;
 						if(squares[a][b].rSide == true)
@@ -137,11 +137,13 @@ public class SlitherBoard extends JPanel{
 						if(counter > squares[a][b].getSqValue() && squares[a][b].getSqValue() != 1000){
 							JOptionPane.showMessageDialog(null,"There are numbers that have an incorrect number of lines");
 							noErrors = false;
+							brokeout = true;
 							break outerloop1;
 						}
 						else if(counter < squares[a][b].getSqValue() && squares[a][b].getSqValue() != 1000){
 							JOptionPane.showMessageDialog(null,"There are numbers that have an incorrect number of lines");
 							noErrors = false;
+							brokeout = true;
 							break outerloop1;
 						}
 						else if(counter == squares[a][b].getSqValue()){
@@ -149,6 +151,7 @@ public class SlitherBoard extends JPanel{
 							if(err == false){
 								noErrors = false;
 								JOptionPane.showMessageDialog(null,"Illegal Move");
+								brokeout = true;
 								break outerloop1;
 							}
 							else
@@ -157,9 +160,13 @@ public class SlitherBoard extends JPanel{
 						counter = 0;
 					}
 				}
-			if(noErrors)
-				//JOptionPane.showMessageDialog(null,"Congratulations! You solved the puzzle.");
-				selectStartingPt();
+			if(brokeout != true){
+				boolean solution = isSolution();
+				if(noErrors && solution)
+					JOptionPane.showMessageDialog(null,"Congratulations! You solved the puzzle");
+				else if(solution == false)
+					JOptionPane.showMessageDialog(null,"Not a solution");
+			}
 		}
 	}
 	
@@ -188,7 +195,7 @@ public class SlitherBoard extends JPanel{
 		squares = new Square[rows][cols];
 		for(int i = 0; i < rows; i++){
 			for(int j = 0; j < cols; j++){
-				squares[i][j] = new Square(rows,cols,a[i][j],false,false,false,false);
+				squares[i][j] = new Square(rows,cols,a[i][j],i,j,false,false,false,false);
 			}
 		}
 		repaint();
@@ -199,7 +206,7 @@ public class SlitherBoard extends JPanel{
 		selectionPanel = new JPanel(new FlowLayout());
 		selectionPanel.setPreferredSize(new Dimension(100,50));
 		
-		gridPath = new JTextField("3x3.txt");
+		gridPath = new JTextField("2x2.txt");
 		gridPath.setPreferredSize(new Dimension(75,24));
 		ggBtn = new JButton("Get Grid");
 		ggBtn.addActionListener(new makeGrid());
@@ -296,34 +303,54 @@ public class SlitherBoard extends JPanel{
 		int uRow = Integer.parseInt(rMove);
 		int uCol = Integer.parseInt(cMove);
 		
-		if(sMove.equals("T")){
+		if(sMove.equals("T") || sMove.equals("t")){
 			squares[uRow][uCol].tSide = true;
+			if(sol.contains(squares[uRow][uCol].tEdge) == false)
+				sol.add(squares[uRow][uCol].tEdge);
 			repaint();
 		}
-		else if(sMove.equals("R")){
-			if(uCol + 1 >= colSize)
+		else if(sMove.equals("R") || sMove.equals("r")){
+			if(uCol + 1 >= colSize){
 				squares[uRow][uCol].rSide = true;
+				if(sol.contains(squares[uRow][uCol].rEdge) == false)
+					sol.add(squares[uRow][uCol].rEdge);
+			}
 			else{
 				squares[uRow][uCol].rSide = true;
 				squares[uRow][uCol+1].lSide = true;
+				if(sol.contains(squares[uRow][uCol].rEdge) == false){
+					sol.add(squares[uRow][uCol].rEdge);
+				}
 			}
 			repaint();
 		}
-		else if(sMove.equals("B")){
-			if(uRow + 1 >= rowSize)
+		else if(sMove.equals("B") || sMove.equals("b")){
+			if(uRow + 1 >= rowSize){
 				squares[uRow][uCol].bSide = true;
+				if(sol.contains(squares[uRow][uCol].bEdge) == false)
+					sol.add(squares[uRow][uCol].bEdge);
+			}
 			else{
 				squares[uRow+1][uCol].tSide = true;
 				squares[uRow][uCol].bSide = true;
+				if(sol.contains(squares[uRow+1][uCol].tEdge) == false){
+					sol.add(squares[uRow+1][uCol].tEdge);
+				}
 			}
 			repaint();
 		}
-		else if(sMove.equals("L")){
-			if(uCol == 0)
+		else if(sMove.equals("L") || sMove.equals("l")){
+			if(uCol == 0){
 				squares[uRow][uCol].lSide = true;
+				if(sol.contains(squares[uRow][uCol].lEdge) == false)
+					sol.add(squares[uRow][uCol].lEdge);
+			}
 			else{
 				squares[uRow][uCol].lSide = true;
 				squares[uRow][uCol-1].rSide = true;
+				if(sol.contains(squares[uRow][uCol].lEdge) == false){
+					sol.add(squares[uRow][uCol].lEdge);
+				}
 			}
 			repaint();
 		}
@@ -336,25 +363,46 @@ public class SlitherBoard extends JPanel{
 		int uRow = Integer.parseInt(rMove);
 		int uCol = Integer.parseInt(cMove);
 		
-		if(sMove.equals("T")){
+		if(sMove.equals("T" ) || sMove.equals("t")){
 			squares[uRow][uCol].tSide = false;
+			sol.remove(squares[uRow][uCol].tEdge);
 			repaint();
 		}
-		else if(sMove.equals("R")){
-			squares[uRow][uCol].rSide = false;
+		else if(sMove.equals("R") || sMove.equals("r")){
+			if(uCol == rowSize-1){
+				squares[uRow][uCol].rSide = false;
+				sol.remove(squares[uRow][uCol].rEdge);
+			}
+			else{
+				squares[uRow][uCol].rSide = false;
+				squares[uRow][uCol+1].lSide = false;
+				sol.remove(squares[uRow][uCol].rEdge);
+				}
 			repaint();
 		}
-		else if(sMove.equals("B")){
-			if(uRow + 1 >= rowSize)
+		else if(sMove.equals("B") || sMove.equals("b")){
+			if(uRow + 1 >= rowSize){
 				squares[uRow][uCol].bSide = false;
+				sol.remove(squares[uRow][uCol].bEdge);
+			}
 			else{
 				squares[uRow+1][uCol].tSide = false;
 				squares[uRow][uCol].bSide = false;
+				sol.remove(squares[uRow+1][uCol].tEdge);
+				sol.remove(squares[uRow][uCol].bEdge);
 			}
 			repaint();
 		}
-		else if(sMove.equals("L")){
-			squares[uRow][uCol].lSide = false;
+		else if(sMove.equals("L") || sMove.equals("l")){
+			if(uCol == 0){
+				squares[uRow][uCol].lSide = false;
+				sol.remove(squares[uRow][uCol].lEdge);
+			}
+			else{
+				squares[uRow][uCol].lSide = false;
+				squares[uRow][uCol-1].rSide = false;
+				sol.remove(squares[uRow][uCol].lEdge);
+			}
 			repaint();
 		}
 		else{
@@ -391,37 +439,40 @@ public class SlitherBoard extends JPanel{
 		return true;
 	}
 	
-	public void selectStartingPt(){
-		System.out.println("We are getting somewhere");
-		/*Variables to save location of first square where we will start*/
-		int x = 0;
-		int y = 0;
-		sol = new ArrayList<Square>();
-		/*Find a square with a value in it. This will be our starting square/point*/
-		breakout:
-			for(int i = 0; i < rowSize; i++){
-				for(int j = 0; j < colSize; j++){
-					if(squares[i][j].getSqValue() != 1 || squares[i][j].getSqValue() != 2 || squares[i][j].getSqValue() != 3)
-						continue;
-					else{
-						x = i;
-						y = j;
-						break breakout;
-					}
+	public boolean isSolution(){
+		int i;
+		/*Save points of the first edge that is in the array*/
+		Point begin = sol.get(0).pt1;
+		Point temp = sol.get(0).pt2;
+		/*Remove this edge from the arraylist*/
+		sol.remove(0);
+		
+		/*If the beginning edge point does not exist it returns false*/
+		/*Iterate until the arraylist is empty*/
+		out:
+		while(!sol.isEmpty()){
+			for(i = 0; i < sol.size(); i++){
+				/*If the the first point of a edge(i) matches pt2 of the first edge, save this new point as temp 
+				 * and remove it from the arraylist
+				 */
+				if(compare(temp,sol.get(i).pt2) || compare(begin, sol.get(i).pt1) || compare(temp,sol.get(i).pt1) || compare(begin, sol.get(i).pt2)){
+					temp = sol.get(i).pt2;
+					begin = sol.get(i).pt1;
+					sol.remove(i);
 				}
+				if(sol.size() == 0)
+					break out;
 			}
-		/*Choose a side that is true to start from*/
-		sol.add(squares[x][y]);
-		if(isSolution(sol))
-			JOptionPane.showMessageDialog(null,"Congratulations! You solved the puzzle.");
+		}
+		if(sol.isEmpty())
+			return true;
+		
+		return false;
 	}
 	
-	public boolean isSolution(ArrayList<Square> list){
-		if(list.get(0).tSide == false && list.get(0).rSide == false && list.get(0).bSide == false && list.get(0).lSide == false)
-			return false;
-		else if(list.get(0).tSide|| list.get(0).rSide|| list.get(0).bSide|| list.get(0).lSide){
-			
-		}
-		return true;
+	public boolean compare(Point p1, Point p2){
+		if(p1.x == p2.x && p1.y == p2.y)
+			return true;
+		return false;
 	}
 }

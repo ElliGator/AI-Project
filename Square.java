@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 
 public class Square {
 
@@ -10,7 +12,17 @@ public class Square {
 	private int row;
 	private int col;
 	
-	public Square(int numR, int numC, int val, boolean top, boolean right, boolean bottom, boolean left){
+	Point v1;
+	Point v2;
+	Point v3;
+	Point v4;
+	
+	Edge tEdge;
+	Edge rEdge;
+	Edge bEdge;
+	Edge lEdge;
+	
+	public Square(int numR, int numC, int val, int i, int j, boolean top, boolean right, boolean bottom, boolean left){
 		this.row = numR;
 		this.col = numC;
 		this.sqValue = val;
@@ -19,6 +31,26 @@ public class Square {
 		this.rSide = right;
 		this.bSide = bottom;
 		this.lSide = left;
+		
+		v1 = new Point(i, j);
+		v2 = new Point(i, j+1);
+		v3 = new Point(i+1, j);
+		v4 = new Point(i+1, j+1);
+		
+		setPts(v1, v2, v3, v4);
+		
+		lEdge = new Edge(v1,v3);
+		tEdge = new Edge(v1,v2);
+		rEdge = new Edge(v2,v4);
+		bEdge = new Edge(v3,v4);
+		
+	}
+	
+	public void setPts(Point pt1, Point pt2, Point pt3, Point pt4){
+		this.v1 = pt1;
+		this.v2 = pt2;
+		this.v3 = pt3;
+		this.v4 = pt4;
 	}
 
 	public int getSqValue() {
